@@ -1,3 +1,6 @@
+# Borrowed from:
+# https://github.com/patrickloeber/pytorchTutorial
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -10,11 +13,11 @@ import itertools
 LOAD = False
 
 # Hyper-parameters 
-input_size = 120*160*3  #= 57600
+input_size = 57600
 output_size = 1
-num_epochs = 10
-batch_size = 100
-learning_rate = 0.001
+num_epochs = 100
+batch_size = 30
+learning_rate = 0.0000000001
 train_test_split = 0.8
 
 
@@ -53,8 +56,8 @@ print(labels.shape)
 
 
 # Only use first 10000 frames
-data = data[:100]
-labels = labels[:100]
+# data = data[:10000]
+# labels = labels[:10000]
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -100,8 +103,9 @@ test_loader = torch.utils.data.DataLoader(dataset=test_data,
 
 examples = iter(test_loader)
 example_data, example_targets = next(examples)
-print('Example data shape: ', example_data.shape)
+print('Example data shape: ', example_data.reshape(-1, input_size).shape)
 print('Example targets shape: ', example_targets.shape)
+
 
 # Fully connected neural network with one hidden layer
 class NeuralNet(nn.Module):
@@ -131,16 +135,15 @@ for epoch in range(num_epochs):
         # Forward pass
         outputs = model(images)
         loss = criterion(outputs, labels)
-        
+
         # Backward and optimize
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         
-        if (i+1) % 5 == 0:
+        if (i+1) % 100 == 0:
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
 
-print('after training')
 # Test the model
 # In test phase, we don't need to compute gradients (for memory efficiency)
 
@@ -152,8 +155,10 @@ with torch.no_grad():
         outputs = model(images)
         
         # Calculate RMSE
-        loss += criterion(outputs, labels)
+        delloss = criterion(outputs, labels)
+        loss += delloss.item()
     
-    loss = np.sqrt(loss)
+
     loss /= len(test_loader)
+    loss = np.sqrt(loss)
     print(f'MSE on the test data is: {loss}')
