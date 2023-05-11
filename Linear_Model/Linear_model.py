@@ -10,14 +10,15 @@ import torchvision
 import pickle as pkl
 import itertools
 
-LOAD = False
+LOAD = False  # If loading mp4 data from scratch
+DIFF = False  # Take difference bt. frames
 
 # Hyper-parameters 
 input_size = 57600
 output_size = 1
-num_epochs = 100
+num_epochs = 1000
 batch_size = 30
-learning_rate = 0.0000000001
+learning_rate = 0.00000000008
 train_test_split = 0.8
 
 
@@ -54,6 +55,12 @@ labels = np.loadtxt('cs229-project/Data/train.txt')
 labels = torch.tensor(labels)
 print(labels.shape)
 
+if DIFF:
+    # Take difference between frames
+    data = data[1:] - data[:-1]
+    labels = labels[1:]
+    print(data.shape)
+    print(labels.shape)
 
 # Only use first 10000 frames
 # data = data[:10000]
