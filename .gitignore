@@ -1,5 +1,5 @@
 # Training data files
-Data/*
+Data/train*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
