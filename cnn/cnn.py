@@ -27,16 +27,16 @@ class cnn(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(rgb_channels, 4*rgb_channels, kernel_size=(5, 5)) # (N, Cin, H, W)
-        self.act1 = nn.Tanh()
+        self.act1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size = (2,2))
 
 
         self.conv2 = nn.Conv2d(4*rgb_channels, 4*rgb_channels, kernel_size = (5, 5))
-        self.act2 = nn.Tanh()
+        self.act2 = nn.ReLU()
         self.pool2 = nn.MaxPool2d(kernel_size = (2,2))
 
         self.conv3 = nn.Conv2d(4*rgb_channels, rgb_channels, kernel_size = (6, 6))
-        self.act3 = nn.Tanh()
+        self.act3 = nn.ReLU()
         self.pool3 = nn.MaxPool2d(kernel_size = (2,2))
 
         self.flat = nn.Flatten()
