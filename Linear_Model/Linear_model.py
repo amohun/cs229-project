@@ -10,7 +10,7 @@ import torchvision
 import pickle as pkl
 import itertools
 
-LOAD = False  # If loading mp4 data from scratch
+LOAD = True  # If loading mp4 data from scratch
 DIFF = False  # Take difference bt. frames
 
 # Hyper-parameters 
