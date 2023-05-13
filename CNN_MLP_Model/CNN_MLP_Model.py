@@ -19,7 +19,7 @@ GPU = True  # Use GPU
 # Hyper-parameters 
 input_size = 57600
 output_size = 1
-num_epochs = 20
+num_epochs = 10
 batch_size = 100
 learning_rate = 0.001
 train_test_split = 0.8
@@ -204,12 +204,12 @@ for epoch in range(num_epochs):
 
         numb = labels.shape[0]
         losss += losss * numb
-        sizee += numb
+        # sizee += numb
         if (i+1) % 10 == 0:
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
-    print(f'Avg Loss = {losss/sizee}')
+    print(f'Total Loss = {losss/sizee}')
     losss = 0
-    sizee = 0
+    # sizee = 0
 
 # Test the model
 # In test phase, we don't need to compute gradients (for memory efficiency)
