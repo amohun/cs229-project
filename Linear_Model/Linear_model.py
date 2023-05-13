@@ -11,7 +11,7 @@ import pickle as pkl
 import itertools
 
 LOAD = False  # If loading mp4 data from scratch
-DIFF = True  # Take difference bt. frames
+DIFF = False  # Take difference bt. frames
 SHUFFLE = True  # Shuffle the train data
 
 
@@ -20,7 +20,7 @@ input_size = 57600
 output_size = 1
 num_epochs = 500
 batch_size = 30
-learning_rate =  0.000001 # 0.000000001
+learning_rate =  0.000000001 # 0.000000001 for DIFF = False
 train_test_split = 0.8
 
 
