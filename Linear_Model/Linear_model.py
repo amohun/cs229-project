@@ -10,7 +10,7 @@ import torchvision
 import pickle as pkl
 import itertools
 
-LOAD = True  # If loading mp4 data from scratch
+LOAD = False  # If loading mp4 data from scratch
 DIFF = False  # Take difference bt. frames
 SHUFFLE = True  # Shuffle the train data
 
@@ -18,9 +18,9 @@ SHUFFLE = True  # Shuffle the train data
 # Hyper-parameters 
 input_size = 57600
 output_size = 1
-num_epochs = 100
+num_epochs = 500
 batch_size = 30
-learning_rate = 0.00000000008
+learning_rate = 0.000000001
 train_test_split = 0.8
 
 
