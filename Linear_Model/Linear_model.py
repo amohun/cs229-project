@@ -11,7 +11,7 @@ import pickle as pkl
 import itertools
 
 LOAD = False  # If loading mp4 data from scratch
-DIFF = False  # Take difference bt. frames
+DIFF = True  # Take difference bt. frames
 SHUFFLE = True  # Shuffle the train data
 
 
@@ -20,7 +20,7 @@ input_size = 57600
 output_size = 1
 num_epochs = 500
 batch_size = 30
-learning_rate = 0.000000001
+learning_rate =  0.000001 # 0.000000001
 train_test_split = 0.8
 
 
@@ -179,4 +179,4 @@ with torch.no_grad():
 
     loss /= len(test_loader.sampler)
     loss = np.sqrt(loss)
-    print(f'MSE on the test data is: {loss}')
+    print(f'RMSE on the test data is: {loss}')
