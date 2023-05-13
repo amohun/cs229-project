@@ -20,7 +20,7 @@ GPU = True  # Use GPU
 input_size = 57600
 output_size = 1
 num_epochs = 10
-batch_size = 100
+batch_size = 50
 learning_rate = 0.001
 train_test_split = 0.8
 
@@ -225,6 +225,6 @@ with torch.no_grad():
 
     loss /= len(test_loader.sampler)
     loss = np.sqrt(loss)
-    print(f'MSE on the test data is: {loss}')
+    print(f'RMSE on the test data is: {loss}')
 
 # test MSE 6.9486
