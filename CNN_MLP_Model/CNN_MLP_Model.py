@@ -121,7 +121,7 @@ examples = iter(test_loader)
 example_data, example_targets = next(examples)
 print('Example data shape: ', example_data.shape)
 print('Example targets shape: ', example_targets.shape)
-
+print(len(test_loader.sampler))
 
 
 
@@ -184,7 +184,6 @@ model = NeuralNet(input_size, output_size).to(device)
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)  
 losss = 0
-sizee = 0
 
 # Train the model
 n_total_steps = len(train_loader)
@@ -203,13 +202,11 @@ for epoch in range(num_epochs):
         optimizer.step()
 
         numb = labels.shape[0]
-        losss += losss * numb
-        # sizee += numb
+        losss += loss.item() * numb
         if (i+1) % 10 == 0:
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
-    print(f'Total Loss = {losss/sizee}')
+    print(f'Average Loss = {losss/len(train_loader.sampler)}')
     losss = 0
-    # sizee = 0
 
 # Test the model
 # In test phase, we don't need to compute gradients (for memory efficiency)
@@ -223,9 +220,11 @@ with torch.no_grad():
         
         # Calculate RMSE
         delloss = criterion(outputs, labels)
-        loss += delloss.item()
+        loss += delloss.item()*images.size(0)
     
 
-    loss /= len(test_loader)
+    loss /= len(test_loader.sampler)
     loss = np.sqrt(loss)
     print(f'MSE on the test data is: {loss}')
+
+# test MSE 6.9486
