@@ -16,7 +16,7 @@ DIFF = False  # Take difference bt. frames
 # Hyper-parameters 
 input_size = 57600
 output_size = 1
-num_epochs = 1000
+num_epochs = 100
 batch_size = 30
 learning_rate = 0.00000000008
 train_test_split = 0.8
@@ -33,8 +33,9 @@ if LOAD:
     frames = []
     for i, frame in enumerate(video):  #itertools.takewhile(lambda x: x['pts'] <= 5, video.seek(2))):
         frames.append(F2.resize(frame['data'], size = [120, 160], antialias=False))
+        # print(frame['data'].shape)
         print(f'frame {i}')
-    video_tensor = torch.stack(frames)
+    video_tensor = torch.stack(frames).type(torch.uint8)
 
     # Check video tensor shape
     print(video_tensor.shape)
@@ -42,9 +43,11 @@ if LOAD:
     # Resize video tensor
 
 
-    print(video_tensor.shape)
     # Save video tensor
     torch.save(video_tensor, 'cs229-project/Data/video_tensor.pt')
+
+    print('saved')
+
 
 # Load video tensor
 data = torch.load('cs229-project/Data/video_tensor.pt')
@@ -132,6 +135,8 @@ model = NeuralNet(input_size, output_size).to(device)
 criterion = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)  
 
+
+losss = 0
 # Train the model
 n_total_steps = len(train_loader)
 for epoch in range(num_epochs):
@@ -148,8 +153,12 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
         
+        losss += loss.item() * images.shape[0]
         if (i+1) % 100 == 0:
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
+    print(f'Average Loss = {losss/len(train_loader.sampler)}')
+    losss = 0
+
 
 # Test the model
 # In test phase, we don't need to compute gradients (for memory efficiency)
@@ -166,6 +175,6 @@ with torch.no_grad():
         loss += delloss.item()
     
 
-    loss /= len(test_loader)
+    loss /= len(test_loader.sampler)
     loss = np.sqrt(loss)
     print(f'MSE on the test data is: {loss}')
