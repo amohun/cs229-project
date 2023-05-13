@@ -12,6 +12,8 @@ import itertools
 
 LOAD = True  # If loading mp4 data from scratch
 DIFF = False  # Take difference bt. frames
+SHUFFLE = True  # Shuffle the train data
+
 
 # Hyper-parameters 
 input_size = 57600
@@ -105,7 +107,7 @@ train_data, test_data = (torch.utils.data.Subset(dataset, range(train_size)),
 # Data loader
 train_loader = torch.utils.data.DataLoader(dataset=train_data, 
                                            batch_size=batch_size, 
-                                           shuffle=False)
+                                           shuffle=SHUFFLE)
 
 test_loader = torch.utils.data.DataLoader(dataset=test_data, 
                                           batch_size=batch_size, 
