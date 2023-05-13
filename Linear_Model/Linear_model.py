@@ -156,7 +156,7 @@ for epoch in range(num_epochs):
         losss += loss.item() * images.shape[0]
         if (i+1) % 100 == 0:
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
-    print(f'Average Loss = {losssTE/len(train_loader.sampler)}')
+    print(f'Average Loss = {losss/len(train_loader.sampler)}')
     losss = 0
 
 
@@ -172,7 +172,7 @@ with torch.no_grad():
         
         # Calculate RMSE
         delloss = criterion(outputs, labels)
-        loss += delloss.item()
+        loss += delloss.item() * images.shape[0]
     
 
     loss /= len(test_loader.sampler)
