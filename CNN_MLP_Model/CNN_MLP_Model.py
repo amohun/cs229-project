@@ -19,7 +19,7 @@ GPU = True  # Use GPU
 # Hyper-parameters 
 input_size = 57600
 output_size = 1
-num_epochs = 10
+num_epochs = 20
 batch_size = 50
 learning_rate = 0.001
 train_test_split = 0.8
@@ -160,8 +160,10 @@ class NeuralNet(nn.Module):
         self.input_size = input_size
         self.conv1 = nn.Conv2d(3, 40, 5)
         self.pool = nn.MaxPool2d(4, 4)
+        self.drop = nn.Dropout(p=0.5, inplace=False)
         self.conv2 = nn.Conv2d(40, 60, 5)
         self.conv3 = nn.Conv2d(60, 240, 3)
+        self.resnet = nn.Linear(240, 240)  # NOT ACTUALLY RESNET
         self.fc1 = nn.Linear(240, 120)
         self.fc2 = nn.Linear(120, 60)
         self.fc3 = nn.Linear(60, 1)
@@ -172,8 +174,30 @@ class NeuralNet(nn.Module):
         x = self.pool(F.relu(self.conv3(x)))
         x = torch.flatten(x, 1) # flatten all dimensions except batch
         # print(x.shape)
+        # x = self.drop(x)
+
+        # Best result so far
+        # x = F.relu(self.resnet(x))
+        # x = F.relu(self.resnet(x))
+
+
+
+        # Resnet Didn't perform very well
+        x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
+        x = self.drop(x)
+        x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
+        x = self.drop(x)
+        x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
+        x = self.drop(x)
+        # x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
+        # x = self.drop(x)
+        # x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
+
+
         x = F.relu(self.fc1(x))
+        # x = self.drop(x)
         x = F.relu(self.fc2(x))
+        # x = self.drop(x)
         x = self.fc3(x)
         # no activation and no softmax at the end
         return x
@@ -182,7 +206,7 @@ model = NeuralNet(input_size, output_size).to(device)
 
 # Loss and optimizer
 criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)  
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)  
 losss = 0
 
 # Train the model
@@ -203,7 +227,7 @@ for epoch in range(num_epochs):
 
         numb = labels.shape[0]
         losss += loss.item() * numb
-        if (i+1) % 10 == 0:
+        if (i+1) % 50 == 0:
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
     print(f'Average Loss = {losss/len(train_loader.sampler)}')
     losss = 0
