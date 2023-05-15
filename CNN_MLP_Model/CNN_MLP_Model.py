@@ -19,8 +19,8 @@ GPU = True  # Use GPU
 # Hyper-parameters 
 input_size = 57600
 output_size = 1
-num_epochs = 20
-batch_size = 50
+num_epochs = 40
+batch_size = 300
 learning_rate = 0.001
 train_test_split = 0.8
 
@@ -169,26 +169,25 @@ class NeuralNet(nn.Module):
         self.fc3 = nn.Linear(60, 1)
     
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.tanh(self.conv1(x)))
+        x = self.pool(F.tanh(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
         x = torch.flatten(x, 1) # flatten all dimensions except batch
         # print(x.shape)
         # x = self.drop(x)
 
         # Best result so far
-        # x = F.relu(self.resnet(x))
-        # x = F.relu(self.resnet(x))
+        x = F.relu(self.resnet(x))
+        x = F.relu(self.resnet(x))
 
 
 
-        # Resnet Didn't perform very well
-        x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
-        x = self.drop(x)
-        x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
-        x = self.drop(x)
-        x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
-        x = self.drop(x)
+        # 1 Layer Resnet did perform very well
+        # x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
+        # x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
+        # x = self.drop(x)
+        # x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
+        # x = self.drop(x)
         # x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
         # x = self.drop(x)
         # x = F.relu(self.resnet(F.relu(self.resnet(x)))) + x
@@ -206,7 +205,7 @@ model = NeuralNet(input_size, output_size).to(device)
 
 # Loss and optimizer
 criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)  
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-3)  
 losss = 0
 
 # Train the model
@@ -227,9 +226,9 @@ for epoch in range(num_epochs):
 
         numb = labels.shape[0]
         losss += loss.item() * numb
-        if (i+1) % 50 == 0:
+        if (i+1) % 10 == 0:
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
-    print(f'Average Loss = {losss/len(train_loader.sampler)}')
+    print(f'Average MSE Loss = {losss/len(train_loader.sampler)}')
     losss = 0
 
 # Test the model
@@ -248,7 +247,8 @@ with torch.no_grad():
     
 
     loss /= len(test_loader.sampler)
+    print(f'MSE on the test data is: {loss}')
     loss = np.sqrt(loss)
     print(f'RMSE on the test data is: {loss}')
 
-# test MSE 6.9486
+# test MSE 3.57, 3.37 best results
