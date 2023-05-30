@@ -63,19 +63,23 @@ class cnn(nn.Module):
 
 model = cnn()
 loss_fn = nn.MSELoss()
-optimizer = optim.SGD(model.parameters(), lr = 0.001, momentum = 0.9)
+optimizer = optim.SGD(model.parameters(), lr = 1e-4, momentum = 0.9)
 
 n_epochs = 1
 inputs = np.zeros((batch_size, rgb_channels, im_height, im_width))
 for _ in np.arange(n_epochs):
-    for batch in tqdm(np.array(train_id).reshape(-1, batch_size)):
+    for batch_num, batch in enumerate(tqdm(np.array(train_id).reshape(-1, batch_size))):
         for i, im in enumerate(batch):
             for c in np.arange(rgb_channels):
                 inputs[i, c, :, :] = cv2.imread(cs_project + "/Data/images/frame_" + str(im) + ".jpg")[:, :, c]
-        
-        images = torch.tensor(inputs, dtype = torch.float)
+
+        images = torch.tensor(inputs / np.max(inputs), dtype = torch.float) # normalize inputs [0, 1]
         y_pred = model(images)
-        loss = loss_fn(y_pred, labels[batch]); print(loss)
+        loss = loss_fn(y_pred, labels[batch])
+
+        if batch_num % 20 == 0:
+            print("Training loss: ", np.round(loss.item(), 2))
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
