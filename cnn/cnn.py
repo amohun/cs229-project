@@ -26,6 +26,9 @@ assert test.indices not in train.indices # disjoint sets
 train_id = train.indices if len(train.indices) % batch_size == 0 else train.indices[:-(len(train.indices) % batch_size)] # size multiple of bs
 test_id = test.indices
 
+np.savetxt("./train.txt", train_id, )
+np.savetxt("./test.txt", test_id)
+
 class cnn(nn.Module):
     def __init__(self):
         super().__init__()
