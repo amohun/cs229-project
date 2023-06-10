@@ -22,10 +22,10 @@ PATH = 'CNN_MLP_trained_model.pt'
 # Hyper-parameters 
 input_size = 57600
 output_size = 1
-num_epochs = 40
+num_epochs = 20
 batch_size = 300
 learning_rate = 0.001
-train_test_split = 0.8
+train_test_split = 0.9
 
 
 if LOAD:
