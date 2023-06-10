@@ -7,8 +7,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms.functional as F2
 import torchvision
-import pickle as pkl
-import itertools
 import matplotlib.pyplot as plt
 LOAD = False  # If loading mp4 data from scratch
 DIFF = False  # Take difference bt. frames
@@ -20,8 +18,8 @@ input_size = 57600
 output_size = 1
 num_epochs = 40
 batch_size = 30
-learning_rate = 0.00001
-train_test_split = 0.8
+learning_rate = 0.0001
+train_test_split = 0.9
 
 if LOAD:
     # Load video
@@ -130,8 +128,8 @@ class NeuralNet(nn.Module):
         self.conv3 = nn.Conv2d(60, 240, 3)
         self.resnet = nn.Linear(240, 240)  # NOT ACTUALLY RESNET
         self.fc1 = nn.Linear(240, 120)
-        self.rnn = nn.RNN(120, 64, num_layers=15, batch_first=True)
-        self.fc2 = nn.Linear(64, output_size)
+        self.rnn = nn.RNN(120, 1000, num_layers=1, batch_first=True)
+        self.fc2 = nn.Linear(1000, output_size)
     def forward(self, x):
         x = self.pool(F.tanh(self.conv1(x)))
         x = self.pool(F.tanh(self.conv2(x)))
@@ -218,9 +216,12 @@ def generate_boxplot(all_outputs, all_labels):
 
 loss = 0
 with torch.no_grad():
+
+    # Initialize the output aggregation
     all_outputs = []
     all_labels = []
-    all_error = []
+    all_normalized_error = []
+
     loss = 0
 
     for images, labels in test_loader:
@@ -228,20 +229,23 @@ with torch.no_grad():
         labels = labels.unsqueeze(1).to(device)
         outputs = model(images)
 
+        # Aggregate outputs, labels, and errors
         all_outputs.extend(outputs.cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
-        all_error.extend(abs(outputs.cpu().numpy()-labels.cpu().numpy())/labels.cpu().numpy())
+        all_normalized_error.extend(abs(outputs.cpu().numpy()-labels.cpu().numpy())/labels.cpu().numpy())
 
         # Calculate RMSE
         delloss = criterion(outputs, labels)
         loss += delloss.item() * images.size(0)
 
-    plt.scatter(all_outputs, all_labels, s=3, c="red")
-    plt.xlabel('Predicted Velocity (mph)')
-    plt.ylabel('Velocity Label (mph)')
+    # Scatter Plot of outputs versus labels
+    plt.scatter(all_labels, all_outputs, s=3, c="red")
+    plt.xlabel('Velocity Label (mph)')
+    plt.ylabel('Predicted Velocity (mph)')
     plt.show()
 
-    plt.scatter(all_labels, all_error, s=3, c="red")
+    # Scatter Plot of Absolute Error Versus Labels
+    plt.scatter(all_labels, all_normalized_error, s=3, c="red")
     plt.xlabel('Velocity (mph)')
     plt.ylabel('Absolute Error(mph)')
     plt.show()
