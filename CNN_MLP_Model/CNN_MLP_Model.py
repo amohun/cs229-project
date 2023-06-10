@@ -16,7 +16,7 @@ LOAD = False # If loading mp4 data from scratch
 DIFF = False  # Take difference bt. frames
 SHUFFLE = True  # Shuffle the train dataset
 GPU = True  # Use GPU
-PATH = 'CNN_RNN_trained_model.pt'
+PATH = 'CNN_MLP_trained_model.pt'
 
 
 # Hyper-parameters 
