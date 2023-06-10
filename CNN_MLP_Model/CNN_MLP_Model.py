@@ -17,7 +17,7 @@ DIFF = False  # Take difference bt. frames
 SHUFFLE = True  # Shuffle the train dataset
 GPU = True  # Use GPU
 PATH = 'CNN_MLP_trained_model.pt'
-
+RETRAIN = False
 
 # Hyper-parameters 
 input_size = 57600
@@ -204,40 +204,48 @@ class NeuralNet(nn.Module):
         # no activation and no softmax at the end
         return x
 
-model = NeuralNet(input_size, output_size).to(device)
+if RETRAIN:
+    model = NeuralNet(input_size, output_size).to(device)
 
-# Loss and optimizer
-criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-3)  
-losss = 0
-
-# Train the model
-n_total_steps = len(train_loader)
-for epoch in range(num_epochs):
-    for i, (images, labels) in enumerate(train_loader):  
-        images = images.to(device)
-        labels = labels.unsqueeze(1).to(device)
-        
-        # Forward pass
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-
-        # Backward and optimize
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        numb = labels.shape[0]
-        losss += loss.item() * numb
-        if (i+1) % 10 == 0:
-            print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
-    print(f'Average MSE Loss = {losss/len(train_loader.sampler)}')
+    # Loss and optimizer
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-3)  
     losss = 0
 
+    # Train the model
+    n_total_steps = len(train_loader)
+    for epoch in range(num_epochs):
+        for i, (images, labels) in enumerate(train_loader):  
+            images = images.to(device)
+            labels = labels.unsqueeze(1).to(device)
+            
+            # Forward pass
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+
+            # Backward and optimize
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            numb = labels.shape[0]
+            losss += loss.item() * numb
+            if (i+1) % 10 == 0:
+                print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
+        print(f'Average MSE Loss = {losss/len(train_loader.sampler)}')
+        losss = 0
 
 
-# Save the model
-torch.save(model.state_dict(), PATH)
+
+    # Save the model
+    torch.save(model.state_dict(), PATH)
+
+else:
+    device = torch.device('cpu')
+    model = NeuralNet(57600, 1)
+    model.load_state_dict(torch.load('/home/jiawenb/CS229/cs229-project/CNN_MLP_trained_model.pt', map_location='cpu'))
+    model.eval()
+    criterion = nn.MSELoss()
 
 
 # Test the model
@@ -261,3 +269,43 @@ with torch.no_grad():
     print(f'RMSE on the test data is: {loss}')
 
 # test MSE 3.57, 3.37 best results
+
+import matplotlib.pyplot as plt
+PRPath = 'pred_real.png'
+RMSEPath = 'RMSE.png'
+loss = 0
+with torch.no_grad():
+    all_outputs = []
+    all_labels = []
+    all_error = []
+    loss = 0
+
+    for images, labels in test_loader:
+        images = images.to(device)
+        labels = labels.unsqueeze(1).to(device)
+        outputs = model(images)
+
+        all_outputs.extend(outputs.cpu().numpy())
+        all_labels.extend(labels.cpu().numpy())
+        all_error.extend(abs(outputs.cpu().numpy()-labels.cpu().numpy())/labels.cpu().numpy())
+
+        # Calculate RMSE
+        delloss = criterion(outputs, labels)
+        loss += delloss.item() * images.size(0)
+
+    plt.scatter(all_outputs, all_labels, s=3, c="red")
+    plt.xlabel('Predicted Velocity (mph)')
+    plt.ylabel('Velocity Label (mph)')
+    plt.show()
+    plt.savefig(PRPath)
+
+    plt.scatter(all_labels, all_error, s=3, c="red")
+    plt.xlabel('Velocity (mph)')
+    plt.ylabel('Absolute Error(mph)')
+    plt.show()
+    plt.savefig(RMSEPath)
+
+    loss /= len(test_loader.sampler)
+    print(f'MSE on the test data is: {loss}')
+    loss = np.sqrt(loss)
+    print(f'RMSE on the test data is: {loss}')
