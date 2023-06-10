@@ -54,11 +54,18 @@ class cnn(nn.Module):
         self.conv_ipip1 = nn.Conv2d(self.ip, self.ip, padding = 1, kernel_size= (3, 3)) # h3 igh-level conv layer
         self.conv_ipip2 = nn.Conv2d(self.ip, self.ip, padding = 1, kernel_size= (3, 3))
         self.conv_ipip3 = nn.Conv2d(self.ip, self.ip, padding = 1, kernel_size= (3, 3))
+        # self.conv_ipip4 = nn.Conv2d(self.ip, self.ip, padding = 1, kernel_size= (3, 3))
+
         self.conv_ip1 = nn.Conv2d(self.ip, 1, padding = 1, kernel_size= (3, 3))
+        
         self.conv_1 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
         self.conv_2 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
+        self.conv_3 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
 
+        self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
+        self.drop0p1 = nn.Dropout(0.1)
+        self.drop0p2 = nn.Dropout(0.2)
 
         self.pool = nn.MaxPool2d((2, 2))
         self.flat = nn.Flatten()
@@ -66,14 +73,15 @@ class cnn(nn.Module):
 
 
     def forward(self, x):
-        x = self.tanh(self.conv_ipip1(x))
-        x = self.tanh(self.conv_ipip2(x))
-        x = self.tanh(self.conv_ipip3(x))
+        x = self.drop0p1(self.relu(self.conv_ipip1(x)))
+        x = self.drop0p2(self.relu(self.conv_ipip2(x)))
+        x = self.drop0p2(self.relu(self.conv_ipip3(x)))
 
-        x = self.tanh(self.conv_ip1(x))
+        x = self.drop0p2(self.relu(self.conv_ip1(x)))
         
-        x = self.tanh(self.conv_1(x))
-        x = self.tanh(self.conv_2(x))
+        x = self.drop0p2(self.relu(self.conv_1(x)))
+        x = self.drop0p2(self.relu(self.conv_2(x)))
+        x = self.drop0p2(self.relu(self.conv_3(x)))
 
         x = self.pool(x)
         x = self.flat(x)
