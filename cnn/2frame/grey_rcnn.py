@@ -60,7 +60,7 @@ class cnn(nn.Module):
         
         self.conv_1 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
         self.conv_2 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
-        self.conv_3 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
+        # self.conv_3 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
 
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
@@ -73,15 +73,14 @@ class cnn(nn.Module):
 
 
     def forward(self, x):
-        x = self.drop0p1(self.relu(self.conv_ipip1(x)))
-        x = self.drop0p2(self.relu(self.conv_ipip2(x)))
-        x = self.drop0p2(self.relu(self.conv_ipip3(x)))
+        x = self.relu(self.conv_ipip1(x))
+        x = self.relu(self.conv_ipip2(x))
+        x = self.drop0p1(self.relu(self.conv_ipip3(x)))
 
-        x = self.drop0p2(self.relu(self.conv_ip1(x)))
+        x = self.relu(self.conv_ip1(x))
         
-        x = self.drop0p2(self.relu(self.conv_1(x)))
-        x = self.drop0p2(self.relu(self.conv_2(x)))
-        x = self.drop0p2(self.relu(self.conv_3(x)))
+        x = self.drop0p1(self.relu(self.conv_1(x)))
+        x = self.drop0p1(self.relu(self.conv_2(x)))
 
         x = self.pool(x)
         x = self.flat(x)
@@ -89,7 +88,7 @@ class cnn(nn.Module):
 
         return x
 
-def train(opt, model, batch):
+def train(opt, model, batch, labels):
     inputs = np.zeros((batch_size, num_ip, im_height, im_width))
 
     for batch_idx, image_num in enumerate(batch): # loop through each batch element per batch
@@ -97,6 +96,7 @@ def train(opt, model, batch):
             inputs[batch_idx, i, :, :] = cv2.imread(cs_project + "/Data/grey_images/gframe_" + str(image_num - i) + ".jpg", cv2.IMREAD_GRAYSCALE)
         
     images = torch.tensor(inputs / np.max(inputs), dtype = torch.float) # normalize inputs [0, 1], convert to tensor
+    images, labels = images.to(device), labels.to(device)
     y_pred = model(images)
     loss = loss_fn(y_pred, labels[batch])
 
@@ -109,9 +109,10 @@ def train(opt, model, batch):
 # -------------------- MODEL TRAINING --------------------
 model = cnn(num_ip)
 loss_fn = nn.MSELoss()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Learning rate schedule
-lr_start = 2e-5 # start [twice intended start]
+lr_start = 2e-4 # start [twice intended start]
 lr_decay = 0.5 # decay rate
 num_decay = 1
 lr_sch = iter(lr_start*np.cumprod(np.repeat([lr_decay], repeats = num_decay, axis = -1))) # decay schedule
@@ -122,11 +123,11 @@ inputs = np.zeros((batch_size, num_ip, im_height, im_width))
 for epoch in np.arange(n_epochs):
     if epoch % (n_epochs / num_decay) == 0:
         lr = next(lr_sch)
-        opt = optim.SGD(model.parameters(), lr = lr, momentum=0.9) # reinitialize mommentum 
+        opt = optim.Adam(model.parameters(), lr = lr) # reinitialize mommentum 
 
     random.shuffle(train_id) # randomly shuffle training set
     for batch_num, batch in enumerate(tqdm(train_id.reshape(-1, batch_size))): # loop through each batch per epoch
-        loss = train(opt, model, batch)
+        loss = train(opt, model, batch, labels)
         if batch_num % 20 == 0:
             print("Training loss: ", loss)
 

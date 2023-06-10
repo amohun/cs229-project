@@ -54,15 +54,15 @@ test = np.loadtxt("./test.txt").astype(np.int16)
 labels = torch.tensor(np.loadtxt(cs_project + "/Data/train.txt")[:, None], dtype = torch.float)
 
 loss_fn = torch.nn.MSELoss()
-loss = []
+loss = np.zeros(test.size,)
 
 image = np.zeros((num_ip, im_height, im_width))
-for im in tqdm(test):
+for iter, im in tqdm(enumerate(test)):
     for i in np.arange(num_ip):
         image[i, :, :] = cv2.imread(cs_project + "/Data/grey_images/gframe_" + str(im - i) + ".jpg", cv2.IMREAD_GRAYSCALE)
 
     input = torch.tensor(image / np.max(image), dtype = torch.float) # normalize inputs [0, 1]
     y_pred = model(input)
-    loss.append(np.abs(y_pred.item() - labels[im].item()))
+    loss[iter] = y_pred.item() - labels[im].item()
 
-print("Mean Absolute Error: ", np.mean(loss))
+print("RMS Error: ", np.sqrt(np.mean(loss**2)))
