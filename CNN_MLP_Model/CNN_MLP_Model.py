@@ -1,5 +1,7 @@
 # Borrowed from:
 # https://github.com/patrickloeber/pytorchTutorial
+# Visualization tool from 
+# https://towardsdatascience.com/visualizing-convolution-neural-networks-using-pytorch-3dfa8443e74e
 
 import numpy as np
 import torch
@@ -14,6 +16,7 @@ LOAD = False # If loading mp4 data from scratch
 DIFF = False  # Take difference bt. frames
 SHUFFLE = True  # Shuffle the train dataset
 GPU = True  # Use GPU
+PATH = 'CNN_RNN_trained_model.pt'
 
 
 # Hyper-parameters 
@@ -27,7 +30,7 @@ train_test_split = 0.8
 
 if LOAD:
     # Load video
-    video_path = "cs229-project/Data/train.mp4"
+    video_path = "Data/train.mp4"
     stream = "video"
     video = torchvision.io.VideoReader(video_path, 'video')
     print(video.get_metadata())
@@ -50,11 +53,11 @@ if LOAD:
     torch.save(video_tensor, 'cs229-project/Data/video_tensor.pt')
 
 # Load video tensor
-data = torch.load('cs229-project/Data/video_tensor.pt')
+data = torch.load('Data/video_tensor.pt')
 print(data.shape)
 
 # Load labels
-labels = np.loadtxt('cs229-project/Data/train.txt')
+labels = np.loadtxt('Data/train.txt')
 labels = torch.tensor(labels)
 print(labels.shape)
 
@@ -129,7 +132,7 @@ print(len(test_loader.sampler))
 
 
 
-# conv1 = nn.Conv2d(3, 40, 5)
+# conv1 = nn.Conv2d(3, 20, 16)
 # a = conv1(example_data)
 # print(a.shape)
 # pool1 = nn.MaxPool2d(4, 4)
@@ -230,6 +233,12 @@ for epoch in range(num_epochs):
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
     print(f'Average MSE Loss = {losss/len(train_loader.sampler)}')
     losss = 0
+
+
+
+# Save the model
+torch.save(model.state_dict(), PATH)
+
 
 # Test the model
 # In test phase, we don't need to compute gradients (for memory efficiency)
