@@ -292,19 +292,22 @@ with torch.no_grad():
         # Calculate RMSE
         delloss = criterion(outputs, labels)
         loss += delloss.item() * images.size(0)
-
+    plt.figure()
     plt.scatter(all_outputs, all_labels, s=3, c="red")
     plt.xlabel('Predicted Velocity (mph)')
     plt.ylabel('Velocity Label (mph)')
-    plt.show()
+    
     plt.savefig(PRPath)
+    plt.show()
 
+    plt.figure()
     plt.scatter(all_labels, all_error, s=3, c="red")
     plt.xlabel('Velocity (mph)')
     plt.ylabel('Absolute Error(mph)')
-    plt.show()
+    
     plt.savefig(RMSEPath)
-
+    plt.show()
+    
     loss /= len(test_loader.sampler)
     print(f'MSE on the test data is: {loss}')
     loss = np.sqrt(loss)
