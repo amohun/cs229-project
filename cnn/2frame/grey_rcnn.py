@@ -60,7 +60,7 @@ class cnn(nn.Module):
         
         self.conv_1 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
         self.conv_2 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
-        # self.conv_3 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
+        self.conv_3 = nn.Conv2d(1, 1, padding = 1, kernel_size= (3, 3))
 
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
@@ -77,10 +77,12 @@ class cnn(nn.Module):
         x = self.relu(self.conv_ipip2(x))
         x = self.drop0p1(self.relu(self.conv_ipip3(x)))
 
-        x = self.relu(self.conv_ip1(x))
+        x = self.drop0p1(self.relu(self.conv_ip1(x)))
         
         x = self.drop0p1(self.relu(self.conv_1(x)))
         x = self.drop0p1(self.relu(self.conv_2(x)))
+        x = self.relu(self.conv_3(x))
+
 
         x = self.pool(x)
         x = self.flat(x)
@@ -95,8 +97,7 @@ def train(opt, model, batch, labels):
         for i in np.arange(num_ip): # build time history input
             inputs[batch_idx, i, :, :] = cv2.imread(cs_project + "/Data/grey_images/gframe_" + str(image_num - i) + ".jpg", cv2.IMREAD_GRAYSCALE)
         
-    images = torch.tensor(inputs / np.max(inputs), dtype = torch.float) # normalize inputs [0, 1], convert to tensor
-    images, labels = images.to(device), labels.to(device)
+    images = torch.tensor(inputs, dtype = torch.float) # normalize inputs [0, 1], convert to tensor
     y_pred = model(images)
     loss = loss_fn(y_pred, labels[batch])
 
@@ -109,12 +110,11 @@ def train(opt, model, batch, labels):
 # -------------------- MODEL TRAINING --------------------
 model = cnn(num_ip)
 loss_fn = nn.MSELoss()
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Learning rate schedule
-lr_start = 2e-4 # start [twice intended start]
-lr_decay = 0.5 # decay rate
-num_decay = 1
+lr_start = 1e-3 # start [ten times intended start]
+lr_decay = 0.1 # decay rate
+num_decay = 2
 lr_sch = iter(lr_start*np.cumprod(np.repeat([lr_decay], repeats = num_decay, axis = -1))) # decay schedule
 
 

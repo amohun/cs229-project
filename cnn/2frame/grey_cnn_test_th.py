@@ -49,7 +49,7 @@ dirname = os.path.dirname(os.path.dirname(__file__))
 cs_project = os.path.dirname(dirname)
 
 model = cnn(num_ip)
-model.load_state_dict(torch.load("./gcnn_40e.pth"))
+model.load_state_dict(torch.load("./sat_night.pth"))
 test = np.loadtxt("./test.txt").astype(np.int16)
 labels = torch.tensor(np.loadtxt(cs_project + "/Data/train.txt")[:, None], dtype = torch.float)
 
