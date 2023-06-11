@@ -22,7 +22,7 @@ RETRAIN = False
 # Hyper-parameters 
 input_size = 57600
 output_size = 1
-num_epochs = 20
+num_epochs = 50
 batch_size = 300
 learning_rate = 0.001
 train_test_split = 0.9
@@ -55,6 +55,9 @@ if LOAD:
 # Load video tensor
 data = torch.load('Data/video_tensor.pt')
 print(data.shape)
+
+# Normalize data
+# data = data - 128
 
 # Load labels
 labels = np.loadtxt('Data/train.txt')
@@ -243,7 +246,7 @@ if RETRAIN:
 else:
     device = torch.device('cpu')
     model = NeuralNet(57600, 1)
-    model.load_state_dict(torch.load('/home/jiawenb/CS229/cs229-project/CNN_MLP_trained_model.pt', map_location='cpu'))
+    model.load_state_dict(torch.load('/home/jiawenb/CS229/cs229-project/CNN_MLP_trained_model_3.9089RMSE.pt', map_location='cpu'))
     model.eval()
     criterion = nn.MSELoss()
 
@@ -273,6 +276,7 @@ with torch.no_grad():
 import matplotlib.pyplot as plt
 PRPath = 'pred_real.png'
 RMSEPath = 'RMSE.png'
+Timeseries = 'Mes_v_time.png'
 loss = 0
 with torch.no_grad():
     all_outputs = []
@@ -306,6 +310,17 @@ with torch.no_grad():
     plt.ylabel('Absolute Error(mph)')
     
     plt.savefig(RMSEPath)
+    plt.show()
+
+    plt.figure()
+    timet = np.linspace(0, len(all_outputs) / 20, len(all_outputs))
+    plt.plot(timet, all_outputs, color="C0")
+    plt.plot(timet, all_labels, color="black")
+    plt.legend(["Predicted Velocity", "Actual Velocity"])
+    plt.xlabel('Time (s)')
+    plt.ylabel('Speed (mph)')
+    
+    plt.savefig(Timeseries)
     plt.show()
     
     loss /= len(test_loader.sampler)
