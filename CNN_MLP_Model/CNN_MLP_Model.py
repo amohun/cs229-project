@@ -16,7 +16,7 @@ LOAD = False # If loading mp4 data from scratch
 DIFF = False  # Take difference bt. frames
 SHUFFLE = True  # Shuffle the train dataset
 GPU = True  # Use GPU
-PATH = 'CNN_MLP_trained_model.pt'
+PATH = '/home/jiawenb/CS229/cs229-project/CNN_MLP_trained_model_3.9089RMSE.pt'
 RETRAIN = False
 
 # Hyper-parameters 
@@ -297,17 +297,17 @@ with torch.no_grad():
         delloss = criterion(outputs, labels)
         loss += delloss.item() * images.size(0)
     plt.figure()
-    plt.scatter(all_outputs, all_labels, s=3, c="red")
-    plt.xlabel('Predicted Velocity (mph)')
-    plt.ylabel('Velocity Label (mph)')
+    plt.scatter(all_labels, all_outputs, s=3, c="red")
+    plt.ylabel('Predicted Velocity (m/s)')
+    plt.xlabel('Velocity Label (m/s)')
     
     plt.savefig(PRPath)
     plt.show()
 
     plt.figure()
     plt.scatter(all_labels, all_error, s=3, c="red")
-    plt.xlabel('Velocity (mph)')
-    plt.ylabel('Absolute Error(mph)')
+    plt.xlabel('Velocity (m/s)')
+    plt.ylabel('Absolute Error(m/s)')
     
     plt.savefig(RMSEPath)
     plt.show()
@@ -318,7 +318,7 @@ with torch.no_grad():
     plt.plot(timet, all_labels, color="black")
     plt.legend(["Predicted Velocity", "Actual Velocity"])
     plt.xlabel('Time (s)')
-    plt.ylabel('Speed (mph)')
+    plt.ylabel('Speed (m/s)')
     
     plt.savefig(Timeseries)
     plt.show()
