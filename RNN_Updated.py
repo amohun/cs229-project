@@ -8,17 +8,18 @@ import torch.nn.functional as F
 import torchvision.transforms.functional as F2
 import torchvision
 import matplotlib.pyplot as plt
+import pickle
 LOAD = False  # If loading mp4 data from scratch
 DIFF = False  # Take difference bt. frames
 SHUFFLE = False  # Shuffle the train dataset
 GPU = True  # Use GPU
-
+DATA_SPLIT = False
 # Hyper-parameters
 input_size = 57600
 output_size = 1
-num_epochs = 40
+num_epochs = 200
 batch_size = 30
-learning_rate = 0.0001
+learning_rate = 0.00001
 train_test_split = 0.9
 
 if LOAD:
@@ -92,23 +93,43 @@ class Speed_Dataset():
 
 
 dataset = Speed_Dataset()
+if DATA_SPLIT:
+    # Split dataset into train and test
+    train_size = int(train_test_split * len(dataset))
+    test_size = len(dataset) - train_size
 
-print('loaded ds')
+    train_data_beginning = torch.utils.data.Subset(dataset, range(0, (len(dataset)-test_size)//2))
+    train_data_end = torch.utils.data.Subset(dataset, range((len(dataset)-test_size)//2+test_size, len(dataset)))
 
-# Split dataset into train and test
-train_size = int(train_test_split * len(dataset))
-test_size = len(dataset) - train_size
-train_data, test_data = (torch.utils.data.Subset(dataset, range(train_size)),
-                         torch.utils.data.Subset(dataset, range(train_size, len(dataset))))
+    train_data = torch.utils.data.ConcatDataset((train_data_beginning, train_data_end))
+    #train_data = get_cross_product(train_data, 2, 500)
 
-# Data loader
-train_loader = torch.utils.data.DataLoader(dataset=train_data,
-                                           batch_size=batch_size,
-                                           shuffle=SHUFFLE)
+    test_data = torch.utils.data.Subset(dataset, range((len(dataset)-test_size)//2, (len(dataset)-test_size)//2+test_size))
+    #test_data = get_cross_product(test_data, 2, 500,)
 
-test_loader = torch.utils.data.DataLoader(dataset=test_data,
-                                          batch_size=batch_size,
-                                          shuffle=False)
+    # Data loader
+    train_loader = torch.utils.data.DataLoader(dataset=train_data,
+                                               batch_size=batch_size,
+                                               shuffle=False)
+
+    test_loader = torch.utils.data.DataLoader(dataset=test_data,
+                                              batch_size=batch_size,
+                                              shuffle=False)
+else:
+    # Split dataset into train and test
+    train_size = int(train_test_split * len(dataset))
+    test_size = len(dataset) - train_size
+    train_data, test_data = (torch.utils.data.Subset(dataset, range(train_size)),
+                             torch.utils.data.Subset(dataset, range(train_size, len(dataset))))
+
+    # Data loader
+    train_loader = torch.utils.data.DataLoader(dataset=train_data,
+                                               batch_size=batch_size,
+                                               shuffle=SHUFFLE)
+
+    test_loader = torch.utils.data.DataLoader(dataset=test_data,
+                                              batch_size=batch_size,
+                                              shuffle=False)
 
 examples = iter(test_loader)
 example_data, example_targets = next(examples)
@@ -162,6 +183,7 @@ losss = 0
 
 # Train the model
 n_total_steps = len(train_loader)
+
 for epoch in range(num_epochs):
     for i, (images, labels) in enumerate(train_loader):
         images = images.to(device)
@@ -182,47 +204,48 @@ for epoch in range(num_epochs):
             print(f'Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{n_total_steps}], Loss: {loss.item():.4f}')
     print(f'Average MSE Loss = {losss / len(train_loader.sampler)}')
     losss = 0
-plt.plot()
+
+torch.save(model.state_dict(), 'rnn_model.pt')
 # Test the model
 # In test phase, we don't need to compute gradients (for memory efficiency)
-
-def generate_boxplot(all_outputs, all_labels):
-    # Convert numpy arrays to hashable types
-    all_labels = [tuple(label) for label in all_labels]
-
-    # Create a dictionary to map labels to integer values
-    label_mapping = {label: i for i, label in enumerate(set(all_labels))}
-
-    # Create empty lists to store binned data points
-    binned_data = [[] for _ in label_mapping]
-
-    # Iterate through the outputs and labels and bin them based on the labels
-    for outputs, labels in zip(all_outputs, all_labels):
-        bin_index = label_mapping[labels]
-
-        # Flatten the outputs if it's a multidimensional array
-        if outputs.ndim > 1:
-            outputs = outputs.flatten()
-
-        binned_data[bin_index].extend(outputs)
-
-    # Generate a box and whisker plot for each set of binned data
-    plt.figure()
-    plt.boxplot(binned_data, labels=label_mapping.keys())
-    plt.xlabel('Labels')
-    plt.ylabel('Outputs')
-    plt.title('Box and Whisker Plot')
-    plt.show()
 
 loss = 0
 with torch.no_grad():
 
     # Initialize the output aggregation
     all_outputs = []
+    all_outputs_training = []
     all_labels = []
-    all_normalized_error = []
+    all_labels_training = []
+    all_error = []
+    all_error_training = []
 
     loss = 0
+
+    for images, labels in train_loader:
+        images = images.to(device)
+        labels = labels.unsqueeze(1).to(device)
+        outputs = model(images)
+
+        # Aggregate outputs, labels, and errors
+        all_outputs_training.extend(outputs.cpu().numpy())
+        all_labels_training.extend(labels.cpu().numpy())
+        all_error_training.extend(abs(outputs.cpu().numpy() - labels.cpu().numpy()))
+
+        # Scatter Plot of outputs versus labels
+    plt.scatter(all_labels_training, all_outputs_training, s=3, c="blue")
+    plt.xlabel('Training Velocity Label (m/s)')
+    plt.ylabel('Predicted Training Velocity (m/s)')
+    plt.show()
+
+    # Scatter Plot of Absolute Error Versus Labels
+    plt.scatter(all_labels_training, all_error_training, s=3, c="blue")
+    plt.xlabel('Velocity (m/s)')
+    plt.ylabel('Absolute Error(m/s)')
+    plt.title('Training Data')
+    plt.show()
+
+
 
     for images, labels in test_loader:
         images = images.to(device)
@@ -232,7 +255,7 @@ with torch.no_grad():
         # Aggregate outputs, labels, and errors
         all_outputs.extend(outputs.cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
-        all_normalized_error.extend(abs(outputs.cpu().numpy()-labels.cpu().numpy())/labels.cpu().numpy())
+        all_error.extend(abs(outputs.cpu().numpy()-labels.cpu().numpy()))
 
         # Calculate RMSE
         delloss = criterion(outputs, labels)
@@ -240,17 +263,32 @@ with torch.no_grad():
 
     # Scatter Plot of outputs versus labels
     plt.scatter(all_labels, all_outputs, s=3, c="red")
-    plt.xlabel('Velocity Label (mph)')
-    plt.ylabel('Predicted Velocity (mph)')
+    plt.xlabel('Velocity Label (m/s)')
+    plt.ylabel('Predicted Velocity (m/s)')
+    plt.title('Test Data')
     plt.show()
 
     # Scatter Plot of Absolute Error Versus Labels
-    plt.scatter(all_labels, all_normalized_error, s=3, c="red")
-    plt.xlabel('Velocity (mph)')
-    plt.ylabel('Absolute Error(mph)')
+    plt.scatter(all_labels, all_error, s=3, c="red")
+    plt.xlabel('Velocity (m/s)')
+    plt.ylabel('Absolute Error(m/s)')
+    plt.title('Test Data')
+    plt.savefig("RNN_Mixed.png")
+    plt.show()
+
+    plt.figure()
+    timet = np.linspace(0, len(all_outputs) / 20, len(all_outputs))
+    plt.plot(timet, all_outputs, color="C0")
+    plt.plot(timet, all_labels, color="black")
+    plt.legend(["Predicted Velocity", "Actual Velocity"])
+    plt.xlabel('Time (s)')
+    plt.ylabel('Speed (m/s)')
+
+    plt.savefig('SpeedVersusTime-rnn.png')
     plt.show()
 
     loss /= len(test_loader.sampler)
     print(f'MSE on the test data is: {loss}')
     loss = np.sqrt(loss)
+
     print(f'RMSE on the test data is: {loss}')
