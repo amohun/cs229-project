@@ -101,7 +101,18 @@ labels = torch.tensor(np.loadtxt(cs_project + "/Data/train.txt")[:, None], dtype
 loss_fn = torch.nn.MSELoss()
 loss = []
 
+import matplotlib.pyplot as plt
+
+PRPath = 'pred_real.png'
+RMSEPath = 'RMSE.png'
+Timeseries = 'Mes_v_time.png'
+
+
 image = np.zeros((1, num_ip, im_height, im_width))
+
+all_outputs = np.empty(test.shape)
+all_labels = np.empty(test.shape)
+all_error = []
 with torch.no_grad():
     for im in tqdm(test):
         for i in np.arange(num_ip):
@@ -110,6 +121,36 @@ with torch.no_grad():
         input = torch.tensor(image / np.max(image), dtype = torch.float) # normalize inputs [0, 1]
         # print(input.shape)
         y_pred = model(input)
+        all_outputs[im-18360] = (y_pred.item())
+        all_labels[im-18360] = (labels[im].item())
+        # all_error.extend(abs(y_pred.item()-labels[im].item())/labels[im].item())
         loss.append((y_pred.item() - labels[im].item()) ** 2)
 
 print("RMSE: ", np.sqrt(np.mean(loss)))
+
+plt.figure()
+plt.scatter(all_labels, all_outputs, s=3, c="red")
+plt.ylabel('Predicted Velocity (m/s)')
+plt.xlabel('Velocity Label (m/s)')
+
+plt.savefig(PRPath)
+plt.show()
+
+# plt.figure()
+# plt.scatter(all_labels, all_error, s=3, c="red")
+# plt.xlabel('Velocity (m/s)')
+# plt.ylabel('Absolute Error(m/s)')
+
+# plt.savefig(RMSEPath)
+# plt.show()
+
+plt.figure()
+timet = np.linspace(0, len(all_outputs) / 20, len(all_outputs))
+plt.plot(timet, all_outputs, color="C0")
+plt.plot(timet, all_labels, color="black")
+plt.legend(["Predicted Velocity", "Actual Velocity"])
+plt.xlabel('Time (s)')
+plt.ylabel('Speed (m/s)')
+
+plt.savefig(Timeseries)
+plt.show()
